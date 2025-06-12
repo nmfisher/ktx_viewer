@@ -1,0 +1,8 @@
+name = "ktx-viewer"
+main = "src/index.js"
+compatibility_date = "2025-05-26"
+
+[assets]
+directory = "./dist/web"
+binding = "ASSETS"
+run_worker_first = true
