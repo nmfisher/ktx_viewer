@@ -141,6 +141,8 @@ void main(List<String> arguments) async {
 
     updateUIState();
     resizer(bg.width!, bg.height!);
+    resizer(bg.width!, bg.height!);
+    resizer(bg.width!, bg.height!);
   };
 
   // Expose clearImage function to JavaScript
