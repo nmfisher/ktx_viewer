@@ -15,8 +15,7 @@
                 const iOSMatch = userAgent.match(/OS (\d+)_(\d+)/);
                 if (iOSMatch) {
                     const iOSVersion = parseInt(iOSMatch[1]);
-                    // iOS 17 corresponds to Safari 17
-                    if (iOSVersion < 17) {
+                    if (iOSVersion < 18) {
                         document.getElementById('safari-warning').style.display = 'block';
                         document.querySelector('.viewer-container').style.opacity = '0.5';
                         document.querySelector('.viewer-container').style.pointerEvents = 'none';
@@ -28,7 +27,7 @@
                     const safariMatch = userAgent.match(/Version\/(\d+)/);
                     if (safariMatch) {
                         const version = parseInt(safariMatch[1]);
-                        if (version < 17) {
+                        if (version < 18) {
                             document.getElementById('safari-warning').style.display = 'block';
                             document.querySelector('.viewer-container').style.opacity = '0.5';
                             document.querySelector('.viewer-container').style.pointerEvents = 'none';
