@@ -13,7 +13,7 @@ export default {
       
       let response = new Response(assetResponse.body);
       response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
-      response.headers.set("Cross-Origin-Embedder-Policy", "credentialless");
+      response.headers.set("Cross-Origin-Embedder-Policy", "require-corp");
 
       if(request.url.endsWith("wasm")) {
         response.headers.set('Content-Type', "application/wasm");
