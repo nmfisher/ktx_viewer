@@ -42,302 +42,264 @@
         // Only initialize if Safari is compatible
         if (checkSafariCompatibility()) {
             try {
-                window.thermion_dart = await thermion_dart();
-            } catch (err) {
+                window.thermion_dart = await thermion_dart();      
+            } catch(err) {
                 console.error(err);
             }
             const script = document.createElement('script')
             script.src = 'viewer.dart.js'
             document.head.append(script);
         }
-    </script>
-    <style>
-        html,
-        body {
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-        }
+        </script>
+        <style>
+            html, body { 
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                min-height: 100vh;
+                font-family: Arial, sans-serif;
+            }
+            
+            .title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+            
+            .description {
+                font-size: 14px;
+                color: #666;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .clear-button {
+                margin-bottom: 15px;
+                padding: 8px 16px;
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background-color 0.2s;
+            }
+            
+            .clear-button:hover {
+                background-color: #c82333;
+            }
+            
+            .clear-button:disabled {
+                background-color: #6c757d;
+                cursor: not-allowed;
+            }
+            
+            .viewer-container {
+                border: 2px solid #ccc;
+                background-color: #f5f5f5;
+                min-width: 33vw;
+                min-height: 33vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                box-sizing: border-box;
+                cursor: pointer;
+                transition: all 0.2s;
+                position: relative;
+            }
+            
+            .viewer-container:hover {
+                background-color: #eeeeee;
+                border-color: #888;
+            }
+            
+            .drop-icon {
+                margin-bottom: 15px;
+            }
+            
+            .drop-icon svg {
+                width: 64px;
+                height: 64px;
+                fill: #999;
+                transition: fill 0.2s;
+            }
+            
+            .viewer-container:hover .drop-icon svg {
+                fill: #666;
+            }
+            
+            .drop-text {
+                font-size: 16px;
+                color: #666;
+                text-align: center;
+                margin-bottom: 10px;
+            }
+            
+            .canvas-container {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .canvas-container.has-image .drop-icon,
+            .canvas-container.has-image .drop-text {
+                display: none;
+            }
+            
+            .cubemap-controls {
+                display: none;
+                margin-top: 20px;
+                text-align: center;
+            }
+            
+            .cubemap-controls.visible {
+                display: block;
+            }
+            
+            .cubemap-buttons {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-top: 10px;
+            }
+            
+            .cubemap-button {
+                padding: 8px 16px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background-color 0.2s;
+            }
+            
+            .cubemap-button:hover {
+                background-color: #0056b3;
+            }
+            
+            .cubemap-button.active {
+                background-color: #28a745;
+            }
+            
+            .format-info {
+                margin-top: 30px;
+                max-width: 600px;
+                text-align: left;
+            }
+            
+            .format-info h3 {
+                font-size: 18px;
+                margin-bottom: 10px;
+                color: #333;
+            }
+            
+            .format-info p {
+                font-size: 14px;
+                line-height: 1.5;
+                color: #666;
+                margin-bottom: 15px;
+            }
+            
+            .format-support {
+                background-color: #f8f9fa;
+                padding: 15px;
+                border-radius: 5px;
+                border-left: 4px solid #007bff;
+                margin-bottom: 20px;
+            }
+            
+            .format-support strong {
+                color: #007bff;
+            }
+            
+            #file-input {
+                display: none;
+            }
+            
+            #thermion_canvas {
+                display: block;
+            }
+            
+        </style>
+    </head>
 
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .description {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .safari-warning {
-            display: none;
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            max-width: 600px;
-            text-align: center;
-        }
-
-        .safari-warning strong {
-            color: #b45309;
-        }
-
-        .safari-warning .upgrade-link {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .safari-warning .upgrade-link:hover {
-            text-decoration: underline;
-        }
-
-        .clear-button {
-            margin-bottom: 15px;
-            padding: 8px 16px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-
-        .clear-button:hover {
-            background-color: #c82333;
-        }
-
-        .clear-button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-
-        .viewer-container {
-            border: 2px solid #ccc;
-            background-color: #f5f5f5;
-            min-width: 33vw;
-            min-height: 33vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .viewer-container:hover {
-            background-color: #eeeeee;
-            border-color: #888;
-        }
-
-        .drop-icon {
-            margin-bottom: 15px;
-        }
-
-        .drop-icon svg {
-            width: 64px;
-            height: 64px;
-            fill: #999;
-            transition: fill 0.2s;
-        }
-
-        .viewer-container:hover .drop-icon svg {
-            fill: #666;
-        }
-
-        .drop-text {
-            font-size: 16px;
-            color: #666;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .canvas-container {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .canvas-container.has-image .drop-icon,
-        .canvas-container.has-image .drop-text {
-            display: none;
-        }
-
-        .cubemap-controls {
-            display: none;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .cubemap-controls.visible {
-            display: block;
-        }
-
-        .cubemap-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .cubemap-button {
-            padding: 8px 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-
-        .cubemap-button:hover {
-            background-color: #0056b3;
-        }
-
-        .cubemap-button.active {
-            background-color: #28a745;
-        }
-
-        .format-info {
-            margin-top: 30px;
-            max-width: 600px;
-            text-align: left;
-        }
-
-        .format-info h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .format-info p {
-            font-size: 14px;
-            line-height: 1.5;
-            color: #666;
-            margin-bottom: 15px;
-        }
-
-        .format-support {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #007bff;
-            margin-bottom: 20px;
-        }
-
-        .format-support strong {
-            color: #007bff;
-        }
-
-        #file-input {
-            display: none;
-        }
-
-        #thermion_canvas {
-            display: none;
-        }
-
-        #thermion_canvas.visible {
-            display: block;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="title">Free KTX Viewer</div>
-    <div class="description">View KTX cubemaps and textures in your browser. Run 100% locally, nothing leaves your
-        device.</div>
-
-    <div id="safari-warning" class="safari-warning">
-        <strong>⚠️ Safari Compatibility Issue</strong><br>
-        This KTX viewer requires Safari 17 or later to function properly. Your current Safari version is not
-        supported.<br>
-        Please <a href="https://support.apple.com/en-us/HT201541" class="upgrade-link" target="_blank">update Safari</a>
-        or use a different browser like Chrome or Firefox.
-    </div>
-
-    <button id="clear-button" class="clear-button" onclick="if(window.clearImage) window.clearImage();" disabled>
-        Clear Image
-    </button>
-
-    <div class="viewer-container" ondrop="if(window.onFileChanged) window.onFileChanged(event); event.preventDefault();"
-        ondragover="event.preventDefault();" ondragenter="event.preventDefault();"
-        onclick="document.getElementById('file-input').click();">
-
-        <div id="canvas-container" class="canvas-container">
-            <div class="drop-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                    <path d="M12,11L16,15H13V19H11V15H8L12,11Z" />
-                </svg>
+    <body>
+        <div class="title">Free KTX Viewer</div>
+        <div class="description">View KTX and KTX2 texture files online in your browser</div>
+                
+        <div class="viewer-container" 
+             ondrop="if(window.onFileChanged) window.onFileChanged(event); event.preventDefault();" 
+             ondragover="event.preventDefault();"
+             ondragenter="event.preventDefault();"
+             onclick="document.getElementById('file-input').click();">
+            
+            <div id="canvas-container">
+                
+                <canvas id="thermion_canvas" class="visible"></canvas>
+                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div class="drop-icon" style="transform: scale(0.5)">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                            <path d="M12,11L16,15H13V19H11V15H8L12,11Z"/>
+                        </svg>
+                    </div>
+                    <div class="drop-text">Drag a .ktx or .ktx2 file here, or click to select</div>
+                </div>
             </div>
-            <div class="drop-text">Drag a .ktx file here or click to select</div>
-            <canvas id="thermion_canvas"></canvas>
         </div>
-    </div>
-
-    <div id="cubemap-controls" class="cubemap-controls">
-        <div style="font-size: 16px; font-weight: bold; margin-bottom: 10px;">Cubemap Faces</div>
-        <div class="cubemap-buttons">
-            <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(0);">+X
-                (Right)</button>
-            <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(1);">-X
-                (Left)</button>
-            <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(2);">+Y
-                (Top)</button>
-            <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(3);">-Y
-                (Bottom)</button>
-            <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(4);">+Z
-                (Front)</button>
-            <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(5);">-Z
-                (Back)</button>
+        
+        <div id="cubemap-controls" class="cubemap-controls">
+            <div style="font-size: 16px; font-weight: bold; margin-bottom: 10px;">Cubemap Faces</div>
+            <div class="cubemap-buttons">
+                <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(0);">+X (Right)</button>
+                <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(1);">-X (Left)</button>
+                <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(2);">+Y (Top)</button>
+                <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(3);">-Y (Bottom)</button>
+                <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(4);">+Z (Front)</button>
+                <button class="cubemap-button" onclick="if(window.setCubemapFace) window.setCubemapFace(5);">-Z (Back)</button>
+            </div>
         </div>
-    </div>
+        
+        <div class="format-info">
+            <div class="format-support">
+                Partial support for KTX2 now available. You can view some KTX2 files that contain BasisU-encoded textures. 
+            </div>
 
-    <div class="format-info">
-        <div class="format-support">
-            <strong>Format Support:</strong> Currently supports KTX1 format. KTX2 support is coming soon!
+            <h3>Updates</h3>
+            <ul>
+                <li>24 July 2025 - KTX2 now partially supported.</li>
+                <li>13 June 2025 - KTX1 support available. </li>
+            </ul>
+            
+            <h3>What is KTX?</h3>
+            <p>
+                KTX (Khronos Texture) is a lightweight file format for OpenGL and Vulkan textures developed by the Khronos Group. 
+                It's designed to store textures in their GPU-ready format, eliminating the need for runtime conversion and providing 
+                optimal loading performance.
+            </p>
+            <p>
+                KTX files can contain 2D textures, cubemaps, texture arrays, and mipmaps. They support various compression formats 
+                including ETC, ASTC, S3TC, and PVRTC, making them ideal for cross-platform applications and games where texture 
+                loading speed and memory efficiency are crucial.
+            </p>
         </div>
-
-        <h3>What is KTX?</h3>
-        <p>
-            KTX (Khronos Texture) is a lightweight file format for OpenGL and Vulkan textures developed by the Khronos
-            Group.
-            It's designed to store textures in their GPU-ready format, eliminating the need for runtime conversion and
-            providing
-            optimal loading performance.
-        </p>
-        <p>
-            KTX files can contain 2D textures, cubemaps, texture arrays, and mipmaps. They support various compression
-            formats
-            including ETC, ASTC, S3TC, and PVRTC, making them ideal for cross-platform applications and games where
-            texture
-            loading speed and memory efficiency are crucial.
-        </p>
-    </div>
-
-    <input type="file" id="file-input" accept=".ktx"
-        onchange="if(window.onFileChanged) window.onFileChanged({dataTransfer: {files: this.files}});">
-</body>
-
+        
+        <input type="file" 
+               id="file-input" 
+               accept=".ktx,.ktx2" 
+               onchange="if(window.onFileChanged) window.onFileChanged({dataTransfer: {files: this.files}});">
+        <footer>
+            Made by <a href="https://nick-fisher.com">Nick Fisher</a>
+        </fotoer>
+    </body>
 </html>

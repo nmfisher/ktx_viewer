@@ -19,18 +19,31 @@ void main(List<String> arguments) async {
 
   final canvas =
       document.getElementById("thermion_canvas") as HTMLCanvasElement;
-
+  try {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  } catch (err) {
+    print(err.toString());
+  }
   final config = FFIFilamentConfig(backend: Backend.OPENGL);
 
   await FFIFilamentApp.create(config: config);
+  await FilamentApp.instance!
+      .setClearOptions(1.0, 0.0, 1.0, 1.0, clear: true, clearStencil: 0);
 
-  var swapChain = await FilamentApp.instance!
-      .createHeadlessSwapChain(canvas.width, canvas.height);
+  var swapChain = await FilamentApp.instance!.createHeadlessSwapChain(
+      canvas.width, canvas.height,
+      hasStencilBuffer: true);
+  print(
+      "Created headless swapchain with dimensions ${canvas.width} x ${canvas.height}");
   final viewer = ThermionViewerFFI();
   await viewer.initialized;
-  await FilamentApp.instance!.setClearOptions(1.0, 0.0, 1.0, 1.0);
   await FilamentApp.instance!.register(swapChain, viewer.view);
   await viewer.view.setFrustumCullingEnabled(false);
+
+  await viewer.setViewport(canvas.width, canvas.height);
+  await viewer.render();
+
   final camera = await viewer.getActiveCamera();
 
   Timer? _resizeTimer;
@@ -49,14 +62,17 @@ void main(List<String> arguments) async {
     try {
       resizing = true;
       await viewer.setViewport(width, height);
-      await camera.setLensProjection(aspect: width / height);
+      final aspect = width / height;
+      await camera.setLensProjection(aspect: aspect);
 
       Thermion_resizeCanvas(width, height);
       canvas.style.width = "${width}px";
       canvas.style.height = "${height}px";
+
       _resizeTimer?.cancel();
       _resizeTimer = Timer(Duration(milliseconds: 100), () async {
-        await viewer.render(swapChain);
+        await viewer.render();
+        print("Resized to ${width}x${height} aspect $aspect");
       });
     } catch (err) {
       print("Error resizing : $err");
@@ -64,9 +80,6 @@ void main(List<String> arguments) async {
       resizing = false;
     }
   };
-
-  await viewer.setBackgroundColor(0, 1, 1, 1);
-  await viewer.render(swapChain);
 
   bg = await viewer.getBackgroundImage();
 
@@ -85,27 +98,15 @@ void main(List<String> arguments) async {
 
   // Function to update UI state
   void updateUIState() {
-    final canvasContainer = document.getElementById("canvas-container");
-    final clearButton =
-        document.getElementById("clear-button") as HTMLButtonElement;
     final controls = document.getElementById("cubemap-controls");
 
     if (hasImage) {
-      canvas.className = "visible";
-      canvasContainer?.className = "canvas-container has-image";
-      clearButton.disabled = false;
-
       if (isCubemap) {
         controls?.className = "cubemap-controls visible";
         updateActiveButton();
       } else {
         controls?.className = "cubemap-controls";
       }
-    } else {
-      canvas.className = "";
-      canvasContainer?.className = "canvas-container";
-      clearButton.disabled = true;
-      controls?.className = "cubemap-controls";
     }
   }
 
@@ -116,8 +117,8 @@ void main(List<String> arguments) async {
     currentFace = 0;
 
     // Reset background to default color
-    await viewer.setBackgroundColor(0, 1, 1, 1);
-    await viewer.render(swapChain);
+    await viewer.setBackgroundColor(0, 0, 1, 1);
+    await viewer.render();
 
     updateUIState();
   }
@@ -129,20 +130,31 @@ void main(List<String> arguments) async {
 
     // ignore: sdk_version_since
     final uint8Array = JSUint8Array(buffer, 0, selectedFile!.size);
-    final ktxBundle = await FFIKtx1Bundle.create(uint8Array.toDart);
-    await bg.setImageFromKtxBundle(ktxBundle);
 
-    hasImage = true;
-    isCubemap = ktxBundle.isCubemap();
-    if (isCubemap) {
-      currentFace = 0;
-      await bg.setCubemapFace(currentFace);
+    print(selectedFile.name);
+
+    if (selectedFile.name.endsWith(".ktx")) {
+      final ktxBundle = await FFIKtx1Bundle.create(uint8Array.toDart);
+      await bg.setImageFromKtxBundle(ktxBundle);
+      print("Set background image from KTX1 bundle");
+      hasImage = true;
+      isCubemap = ktxBundle.isCubemap();
+      if (isCubemap) {
+        currentFace = 0;
+        await bg.setCubemapFace(currentFace);
+      }
+    } else if (selectedFile.name.endsWith(".ktx2")) {
+      final texture = await FilamentApp.instance!.loadKtx2(uint8Array.toDart);
+      hasImage = true;
+      isCubemap = false;
+      await bg.setImageFromTexture(texture);
     }
 
     updateUIState();
-    resizer(bg.width!, bg.height!);
-    resizer(bg.width!, bg.height!);
-    resizer(bg.width!, bg.height!);
+    for (int i = 0; i < 3; i++) {
+      await resizer(bg.width!, bg.height!);
+      await Future.delayed(Duration(milliseconds: 100));
+    }
   };
 
   // Expose clearImage function to JavaScript
@@ -152,6 +164,8 @@ void main(List<String> arguments) async {
         clearImage();
       }.toJS);
 
+  await Future.delayed(Duration(seconds: 1));
+
   // Expose setCubemapFace function to JavaScript
   window.setProperty(
       'setCubemapFace'.toJS,
@@ -160,7 +174,7 @@ void main(List<String> arguments) async {
           currentFace = faceIndex;
           bg.setCubemapFace(faceIndex).then((_) async {
             updateActiveButton();
-            await viewer.render(swapChain);
+            await viewer.render();
           });
         }
       }.toJS);
@@ -184,4 +198,5 @@ void main(List<String> arguments) async {
 
   // Initial UI state
   updateUIState();
+
 }
